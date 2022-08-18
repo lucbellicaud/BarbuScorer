@@ -46,13 +46,13 @@ class ImputResUI(tk.Frame) :
         dic[self.south] = self.south_UI.get()
 
         self.game.result_wo_declaration = dic
-        # try :
-        score = self.game.score()
-        self.validate_func(score,self.game)
-        self.destroy()
-        self.parent.destroy()
-        # except :
-        #     messagebox.showerror("Erreur","Résultats non valides (fait un effort ptn)")
+        try :
+            score = self.game.score()
+            self.validate_func(score,self.game)
+            self.parent.destroy()
+            self.destroy()
+        except :
+            messagebox.showerror("Erreur","Résultats non valides (fait un effort ptn)")
 
 class ScoreImputUI(tk.Frame) :
     def __init__(self, parent, players_position: Dict[Direction, str], player: Direction) -> None:

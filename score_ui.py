@@ -18,12 +18,35 @@ class ScoreSheet(tk.Frame):
             self, dir, self.players_position) for dir in Direction}
 
         for i, val in enumerate(self.players.values()):
-            val.grid(row=i, column=0)
+            val.grid(row=i%2, column=i//2)
+            val.propagate(0)
 
+        self.total = ScoreSheetTotal(self,self.players_position)
+        self.total.grid(row=2,column=0,columnspan=1)
+
+    def calculate_total(self) :
+        dic_total : Dict[Direction,int] = {dir:0 for dir in Direction}
+        for dir,player in self.players.items() :
+            temp = player.sum_scores()
+            dic_total = {k: temp.get(k, 0) + dic_total.get(k, 0) for k in set(temp)}
+        self.total.total.set_scores(dic_total)
+
+
+        
+
+class ScoreSheetTotal(tk.Frame) :
+    def __init__(self, parent, players_position) -> None:
+        tk.Frame.__init__(self, parent,width=1000)
+        self.players_position = players_position
         self.total_label = tk.Label(self, text='{:^20s}'.format("Total"))
-        self.total_label.grid(row=5,column=0)
+        self.total_label.grid(row=0,column=0,rowspan=2)
+        for i, name in enumerate(self.players_position):
+            self.name = tk.Label(
+                self, text='{:^20s}'.format(self.players_position[name]))
+            self.name.grid(row=0, column=i+1,sticky="nsew")
         self.total = ScoreLine(self)
-        self.total.grid(row=5, column=1,sticky="nsew")
+        self.total.grid(row=1, column=1,columnspan=4,sticky="nsew")
+
 
 
 class Player(tk.Frame):
@@ -32,6 +55,7 @@ class Player(tk.Frame):
             self, parent, highlightbackground="black", highlightthickness=1)
         self.players_position = players_position
         self.dir = dir
+        self.parent=parent
 
         self.name = tk.Label(self, text='{:^20}'.format(
             players_position[dir]), font=("Segoe UI", 20))
@@ -62,12 +86,13 @@ class Player(tk.Frame):
         self.total = ScoreLine(self)
         self.total.grid(row=9, column=1,columnspan=4,sticky="nsew")
 
-    def sum_scores(self) :
+    def sum_scores(self) -> Dict[Direction,int] :
         dic = {dir:0 for dir in Direction}
         for line in self.games.values() :
             for dir,score_cell in line.cells.items() :
                 dic[dir]+=score_cell.get()
         self.total.set_scores(dic)
+        return dic
 
 
     def enter_score(self, game: Game):
@@ -80,6 +105,7 @@ class Player(tk.Frame):
     def set_score(self, scores : Dict[Direction,int], game : Game) :
         self.games[game].set_scores(scores)
         self.sum_scores()
+        self.parent.calculate_total()
     
     def calculate_sum(self) :
         pass
@@ -101,7 +127,7 @@ class ScoreLine(tk.Frame):
 class ScoreCell(tk.Frame):
     def __init__(self, parent) -> None:
         tk.Frame.__init__(self, parent)
-        self.val = tk.IntVar(self, value='{:^25s}'.format('-'))
+        self.val = tk.IntVar(self, value='')
         self.label = tk.Label(self, textvariable=self.val)
         self.label.grid(row=0, column=0,sticky="nsew")
 
@@ -116,4 +142,5 @@ root = tk.Tk()
 root.title(string="BarbuScorer")
 UI = ScoreSheet(root, ["Luc", "Pierre", "Raphi", "Margaux"])
 UI.grid(row=0, column=0)
+UI.propagate(0)
 root.mainloop()
